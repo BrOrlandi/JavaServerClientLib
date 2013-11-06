@@ -1,6 +1,6 @@
 package brorlandi.server;
 
-
+//Métodos que devem ser implementados na sua aplicação para tratar eventos do servidor.
 /**
  * ServerCallbackInterface have all methods that server can call to running an application
  * @author Bruno H. Orlandi

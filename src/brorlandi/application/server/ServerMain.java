@@ -1,8 +1,8 @@
-package brorlandi.application;
+package brorlandi.application.server;
 
 import brorlandi.server.Server;
 
-public class Main {
+public class ServerMain {
 
 	public static void main(String args[]){
 		ServerApp server = new ServerApp();

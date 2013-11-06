@@ -1,4 +1,4 @@
-package brorlandi.application;
+package brorlandi.application.server;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -43,6 +43,7 @@ public class ServerApp implements ServerCallbackInterface {
 	@Override
 	public void onServerInput(String input) {
 		if(input.equals(".")){
+			mServer.sendMessageToAll("..");
 			mServer.downServer();
 			return;
 		}

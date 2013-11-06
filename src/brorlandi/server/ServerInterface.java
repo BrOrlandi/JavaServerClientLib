@@ -2,6 +2,10 @@ package brorlandi.server;
 
 import java.util.ArrayList;
 
+
+/*
+ * Métodos que podem ser chamados pela sua aplicação da interface com o servidor.
+ */
 public interface ServerInterface {
 
 	public boolean isServerOn(); ///< retorna se o servidor está ligado

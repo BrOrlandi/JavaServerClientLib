@@ -8,7 +8,7 @@ import java.util.ArrayList;
 
 
 /**
- * Contem o ServerSocket e trata as requisições dos clientes.
+ * Contem o ServerSocket e trata as requisiï¿½ï¿½es dos clientes.
  * Implementa Runnable para ser executado em uma Thread
  * @author Bruno
  *
@@ -60,6 +60,7 @@ public class Server implements Runnable,ServerInterface
 				cliente = mServer.accept();
 				// cria uma nova Thread para receber o cliente
 				sc = new ClientSession(mClientSessionCallback,cliente);
+				sc.setServer(this);
 				mSessions.add(sc);	// adiciona a lista de clientes conectados
 				sc.start(); // inicia a Thread para tratar o cliente
 			}catch(SocketException e){
@@ -70,6 +71,7 @@ public class Server implements Runnable,ServerInterface
 			}
 		}
 		mServerCallback.onServerOff(this);
+		mClientSessionCallback.onServerOff(this);
 		//Server Close callback
 	}
 	
@@ -85,7 +87,8 @@ public class Server implements Runnable,ServerInterface
 	@Override
 	public void downServer(){
 		mServerOn = false;
-		mInputThread.closeServerInputThread();
+		if(mInputThread != null)
+			mInputThread.closeServerInputThread();
 		try {
 			mServer.close();
 		} catch (IOException e) {

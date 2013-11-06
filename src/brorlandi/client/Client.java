@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.Socket;
-import java.net.UnknownHostException;
 
 public class Client implements Runnable, ClientInterface{
 
@@ -14,58 +13,112 @@ public class Client implements Runnable, ClientInterface{
 	private int mPorta;
 	
 	private Socket mServer;
-	private BufferedReader mServerInput;
-	private BufferedWriter mServerOutput;
+	private BufferedReader mFromServerInput;
+	private BufferedWriter mToServerOutput;
 	
 	private ClientAbstractInput mInputThread;
 	private ClientCallbackInterface mClientCallback;
 	
+	private boolean mIsConnected; ///< Variavel para indicar se o cliente está conectado.
 	
-	public Client(String server, int porta, ClientAbstractInput input){
+	public Client(String server, int porta, ClientCallbackInterface ccbi, ClientAbstractInput input){
 		mServerAddress = server;
 		mPorta = porta;
+		mClientCallback = ccbi;
+		mIsConnected = false;
 
-		new Thread(this).start();
+		Thread clientThread = new Thread(this); // Roda o cliente em uma Thread nova;
+		clientThread.start(); // inicia a Thread.
+		clientThread.setName("Client Thread"); // nome da Thread para debug
 		mInputThread = input;
 		if(mInputThread != null){
 			mInputThread.start(); // inicia a Thread
 			mInputThread.setName("Client Input Thread"); //nome da Thread para debug
 		}
 	}
-	
-	public static void main(String args[]){
-		
-		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-		String serveraddr=null;
-		int porta = 6666;
-		try {
-			System.out.println("Digite o endereço ou IP do servidor:");
-			serveraddr = br.readLine();
-			System.out.println("Digite a Porta do servidor: ");
-			porta = Integer.parseInt(br.readLine());
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
 
-		new Client(serveraddr, porta);
-	}
-	
 	public void run(){
-		String mensagemFeedback;
-		
+	
 		mServer = null;
 		try {
 			mServer = new Socket(mServerAddress, mPorta);
-			System.out.println("Conectado ao Servidor em: "+ mServer.getInetAddress().getHostAddress() +":"+mServer.getPort());
-		} catch (UnknownHostException e1) {
-			System.out.println("Servidor desconhecido. "+ e1.getMessage());
-			System.exit(1);
-		} catch (Exception e1) {
-			System.out.println("ERRO: "+e1.getMessage());
-			System.exit(1);
+			//System.out.println("Conectado ao Servidor em: "+ mServer.getInetAddress().getHostAddress() +":"+mServer.getPort());
+			mIsConnected = true;
+			mClientCallback.onClientConnected(this);
+		} catch (Exception e) {
+			mClientCallback.onException(e);
+			mIsConnected = false;
+			//System.out.println("ERRO: "+e.getMessage());
+			//System.exit(1);
 		}
-		
-		
+        
+        
+		// comunicação com o servidor
+		try{
+			mFromServerInput = new BufferedReader(new InputStreamReader(mServer.getInputStream()));
+			mToServerOutput = new BufferedWriter(new OutputStreamWriter(mServer.getOutputStream()));
+			String read;
+			
+			do{
+				read = mFromServerInput.readLine();
+				if(read != null){
+					mClientCallback.onMessageReceive(read);
+				}
+			}while(read != null && mIsConnected);
+			if(read == null){
+				mIsConnected = false;
+				mClientCallback.onServerDisconnected();
+			}
+		}catch(Exception e){
+			mClientCallback.onException(e);
+		} finally {
+            try {
+    			mIsConnected = false;
+            	mToServerOutput.close();
+	        	mFromServerInput.close();
+	            mServer.close();
+            } catch (IOException e) {
+            }
+            //mServer.removeClientSession(this);
+        }
+	}
+
+	@Override
+	public synchronized void sendMessage(String message) {
+		if(mIsConnected){
+			try {
+				mToServerOutput.write(message);
+				mToServerOutput.newLine();
+				mToServerOutput.flush();
+			} catch (IOException e) {
+				mClientCallback.onException(e);
+			}
+		}
+	}
+
+	@Override
+	public Socket getSocket(){
+		return mServer;
+	}
+
+	@Override
+	public boolean isClientConnected() {
+		return mIsConnected;
+	}
+
+	@Override
+	public void downClient() {
+		mIsConnected = false;
+		if(mInputThread != null)
+			mInputThread.closeClientInputThread();
+		try {
+			mServer.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+		/*
 		try{
 			mServerInput = new BufferedReader(new InputStreamReader(mServer.getInputStream()));
 			mServerOutput = new BufferedWriter(new OutputStreamWriter(mServer.getOutputStream()));
@@ -112,4 +165,5 @@ public class Client implements Runnable, ClientInterface{
 			e.printStackTrace();
 		}
 	}
+	*/
 }

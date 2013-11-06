@@ -1,7 +1,5 @@
 package brorlandi.client;
 
-import brorlandi.server.ServerCallbackInterface;
-
 
 public abstract class ClientAbstractInput extends Thread{
 

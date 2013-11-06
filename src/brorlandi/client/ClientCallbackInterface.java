@@ -1,45 +1,17 @@
 package brorlandi.client;
 
-import brorlandi.server.ServerInterface;
+
 
 /**
- * Possui todos os métodos para executa
+ * Deve ser implementado para tratar os eventos do lado do cliente.
  * @author Bruno H. Orlandi
  *
  */
 public interface ClientCallbackInterface {
 
-	public void onClientConnected(ClientInterface client);
-
-	/**
-	 * Called when server is turned off
-	 * @param server ServerInterface of the server
-	 */
-	public void onServerOff(ServerInterface server);
-	
-	/**
-	 * is called by server when it starts, will try to use the number of port returned by this method
-	 * @return the port that server will try to listen
-	 */
-	public int getPort();
-	
-	/**
-	 * Called when occurs a Exception in the server.
-	 * @param e exception
-	 */
-	public void onException(Exception e);
-	
-	/**
-	 * Will be called when server is closed by an exception
-	 * @param e exception
-	 */
-	public void onServerClosesByException(Exception e);
-	
-	/**
-	 * Will be called by the Server Input Thread when server has an input
-	 * @param input
-	 */
-	public void onServerInput(String input);
-	
-	//public void onServerClosing()
+	public void onClientConnected(ClientInterface client); ///< Cliente conectado com o servidor.
+	public void onServerDisconnected(); ///< Quando a conexão com o servidor foi perdida.
+	public void onException(Exception e); ///< Quando ocorreu uma exceção no
+	public void onClientInput(String input); ///< Quando o cliente envia uma mensagem
+	public void onMessageReceive(String message); ///< Quando o cliente recebe uma mensagem do servidor
 }

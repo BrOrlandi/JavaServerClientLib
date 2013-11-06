@@ -1,6 +1,9 @@
 package brorlandi.server;
 
-
+/*
+ * Deve herdar esta classe para implementar a thread de input do servidor, se houver, 
+ * podendo chamar os métodos onServerInput quando há uma mensagem no servidor e onException para avisar uma exception no servidor.
+ */
 public abstract class ServerAbstractInput extends Thread{
 
 	private ServerCallbackInterface mServer; // servidor que possui interface para tratar mensagens de entrada.

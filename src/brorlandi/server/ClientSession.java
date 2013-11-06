@@ -8,16 +8,17 @@ import java.io.OutputStreamWriter;
 import java.net.Socket;
 
 /**
- * Representa uma sess„o do Cliente no Servidor.
+ * Representa uma sess√£o do Cliente no Servidor.
  * @author Bruno
  *
  */
 public class ClientSession extends Thread implements ClientSessionInterface{
 	private Socket mClient; ///< Socket que conversa com o cliente
-	private BufferedReader mClienteInput = null; ///< Buffer de leitura de dados do cliente.
-	private BufferedWriter mClienteOutput = null; ///< Buffer de escrita de dados para o cliente.
+	private BufferedReader mFromClientInput = null; ///< Buffer de leitura de dados do cliente.
+	private BufferedWriter mToClientOutput = null; ///< Buffer de escrita de dados para o cliente.
 	
-	private ClientSessionCallbackInterface mClientSessionCallback; ///< Callback para tratar sess„o do cliente.
+	private ClientSessionCallbackInterface mClientSessionCallback; ///< Callback para tratar sess√£o do cliente.
+	private Server mServer;
 
 	public ClientSession(ClientSessionCallbackInterface csbi, Socket cliente){
 		mClientSessionCallback = csbi;
@@ -26,47 +27,56 @@ public class ClientSession extends Thread implements ClientSessionInterface{
 	
 	public void run(){
 
-		mClientSessionCallback.onClientSessionConnect(mClient);
+		mClientSessionCallback.onClientSessionConnect(this);
         
         
-		// comunicaÁ„o com o cliente
+		// comunica√ß√£o com o cliente
 		try{
-			mClienteInput = new BufferedReader(new InputStreamReader(mClient.getInputStream()));
-			mClienteOutput = new BufferedWriter(new OutputStreamWriter(mClient.getOutputStream()));
+			mFromClientInput = new BufferedReader(new InputStreamReader(mClient.getInputStream()));
+			mToClientOutput = new BufferedWriter(new OutputStreamWriter(mClient.getOutputStream()));
 			String read;
 			
 			do{
-				read = mClienteInput.readLine();
+				read = mFromClientInput.readLine();
 				if(read != null){
-					mClientSessionCallback.onMessageReceive(read);
+					mClientSessionCallback.onMessageReceive(this, read);
 				}
 			}while(read != null);
 			if(read == null){
-				mClientSessionCallback.onClientSessionDisconnect(mClient);
+				mClientSessionCallback.onClientSessionDisconnect(this);
 			}
 		}catch(Exception e){
-			mClientSessionCallback.onException(e);
+			mClientSessionCallback.onException(this, e);
 		} finally {
 
             try {
-        	mClienteOutput.close();
-            mClienteInput.close();
-            mClient.close();
+            	mToClientOutput.close();
+	        	mFromClientInput.close();
+	            mClient.close();
             } catch (IOException e) {
             }
-            //mServer.removeClientSession(this);
+            mServer.removeClientSession(this);
         }
 	}
 
 	@Override
 	public synchronized void sendMessage(String message) {
 		try {
-			mClienteOutput.write(message);
-			mClienteOutput.newLine();
-			mClienteOutput.flush();
+			mToClientOutput.write(message);
+			mToClientOutput.newLine();
+			mToClientOutput.flush();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+
+	@Override
+	public Socket getSocket(){
+		return mClient;
+	}
+	
+	public void setServer(Server server){
+		mServer = server;
 	}
 }

@@ -1,14 +1,13 @@
 package brorlandi.client;
 
-import java.util.ArrayList;
+import java.net.Socket;
 
-import brorlandi.server.ClientSession;
-import brorlandi.server.ClientSessionInterface;
 
 public interface ClientInterface {
 
 	public boolean isClientConnected(); ///< retorna se o cliente está conectado
-	public int getLocalPort(); ///< retorna a porta que o servidor está ouvindo
-	public void downClient(); ///< requisição para o cliente fechar a conexão 
+	public Socket getSocket(); ///> retorna o socket de comunicação com o servidor.
+	public void sendMessage(String message); ///< envia uma mensagem para o servidor.
+	public void downClient(); ///< solicita que o cliente se desconecte.
 	
 }
