@@ -27,13 +27,15 @@ public class ClientSession extends Thread implements ClientSessionInterface{
 	
 	public void run(){
 
-		mClientSessionCallback.onClientSessionConnect(this);
         
         
 		// comunicação com o cliente
 		try{
 			mFromClientInput = new BufferedReader(new InputStreamReader(mClient.getInputStream()));
 			mToClientOutput = new BufferedWriter(new OutputStreamWriter(mClient.getOutputStream()));
+			
+			mClientSessionCallback.onClientSessionConnect(this);
+			
 			String read;
 			
 			do{
