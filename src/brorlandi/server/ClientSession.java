@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.Socket;
+import java.net.SocketException;
 
 /**
  * Representa uma sessão do Cliente no Servidor.
@@ -47,7 +48,9 @@ public class ClientSession extends Thread implements ClientSessionInterface{
 			if(read == null){
 				mClientSessionCallback.onClientSessionDisconnect(this);
 			}
-		}catch(Exception e){
+		}catch(SocketException se){
+			mClientSessionCallback.onClientSessionDisconnect(this);
+		} catch(Exception e){
 			mClientSessionCallback.onException(this, e);
 		} finally {
 

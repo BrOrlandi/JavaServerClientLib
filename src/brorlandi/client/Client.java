@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.Socket;
+import java.net.SocketException;
 
 public class Client implements Runnable, ClientInterface{
 
@@ -69,7 +70,9 @@ public class Client implements Runnable, ClientInterface{
 				mIsConnected = false;
 				mClientCallback.onServerDisconnected();
 			}
-		}catch(Exception e){
+		}catch(SocketException se){
+			mClientCallback.onServerDisconnected();
+		} catch(Exception e){
 			mClientCallback.onException(e);
 		} finally {
             try {
