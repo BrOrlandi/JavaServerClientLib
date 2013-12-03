@@ -28,15 +28,16 @@ public class ClientApp implements ClientCallbackInterface{
 
 	@Override
 	public void onClientInput(String input) {
-		mClient.sendMessage(input);
+		if(input.equals("fechar client")){
+			System.out.println("Voce solicitou fechar a conexao no cliente");	
+			mClient.downClient();
+		}
+		else
+			mClient.sendMessage(input);
 	}
 
 	@Override
 	public void onMessageReceive(String message) {
-		if(message.equals("..")){
-			mClient.downClient();
-			return;
-		}
 		System.out.println("Server: "+ message);		
 	}
 

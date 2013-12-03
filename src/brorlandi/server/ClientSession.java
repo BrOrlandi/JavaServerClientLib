@@ -20,16 +20,16 @@ public class ClientSession extends Thread implements ClientSessionInterface{
 	
 	private ClientSessionCallbackInterface mClientSessionCallback; ///< Callback para tratar sessão do cliente.
 	private Server mServer;
+	
+	private Object lockSendMessage;
 
 	public ClientSession(ClientSessionCallbackInterface csbi, Socket cliente){
 		mClientSessionCallback = csbi;
 		mClient = cliente;
+		lockSendMessage = new Object();
 	}
 	
 	public void run(){
-
-        
-        
 		// comunicação com o cliente
 		try{
 			mFromClientInput = new BufferedReader(new InputStreamReader(mClient.getInputStream()));
@@ -46,9 +46,11 @@ public class ClientSession extends Thread implements ClientSessionInterface{
 				}
 			}while(read != null);
 			if(read == null){
+	            mServer.removeClientSession(this);
 				mClientSessionCallback.onClientSessionDisconnect(this);
 			}
 		}catch(SocketException se){
+            mServer.removeClientSession(this);
 			mClientSessionCallback.onClientSessionDisconnect(this);
 		} catch(Exception e){
 			mClientSessionCallback.onException(this, e);
@@ -60,19 +62,20 @@ public class ClientSession extends Thread implements ClientSessionInterface{
 	            mClient.close();
             } catch (IOException e) {
             }
-            mServer.removeClientSession(this);
         }
 	}
 
 	@Override
-	public synchronized void sendMessage(String message) {
-		try {
-			mToClientOutput.write(message);
-			mToClientOutput.newLine();
-			mToClientOutput.flush();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+	public void sendMessage(String message) {
+		synchronized (lockSendMessage) {
+			try {
+				mToClientOutput.write(message);
+				mToClientOutput.newLine();
+				mToClientOutput.flush();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 	}
 

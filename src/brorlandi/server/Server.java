@@ -24,6 +24,7 @@ public class Server implements Runnable,ServerInterface
 	private ServerCallbackInterface mServerCallback; ///< interface callback quando o servidor executa operações.
 	private ClientSessionCallbackInterface mClientSessionCallback; ///< interface callback para atender cada cliente.
 	
+	private Object lockSessions;
 	
 	public Server(ServerCallbackInterface server, ClientSessionCallbackInterface clientsession, ServerAbstractInput input){
 		mServerCallback = server;
@@ -36,7 +37,7 @@ public class Server implements Runnable,ServerInterface
 		} // Criar ServerSocket
 		mSessions = new ArrayList<ClientSessionInterface>(); // Lista de Sessões dos Clientes
 		mServerOn = true; // Servidor inicia ligado
-		
+		lockSessions = new Object();
 		Thread serverThread = new Thread(this); // Roda o servidor em uma Thread nova;
 		serverThread.start(); // inicia a Thread.
 		serverThread.setName("Server Thread"); // nome da Thread para debug
@@ -61,7 +62,9 @@ public class Server implements Runnable,ServerInterface
 				// cria uma nova Thread para receber o cliente
 				sc = new ClientSession(mClientSessionCallback,cliente);
 				sc.setServer(this);
-				mSessions.add(sc);	// adiciona a lista de clientes conectados
+				synchronized (lockSessions) {
+					mSessions.add(sc);	// adiciona a lista de clientes conectados
+				}
 				sc.start(); // inicia a Thread para tratar o cliente
 			}catch(SocketException e){
 			}catch(IOException e){
@@ -97,8 +100,12 @@ public class Server implements Runnable,ServerInterface
 	}
 
 	@Override
-	public synchronized boolean removeClientSession(ClientSession sc){ // synchronized para evitar problemas de vários clientes se desconectando ao mesmo tempo.
-		return mSessions.remove(sc);
+	public boolean removeClientSession(ClientSession sc){ // synchronized para evitar problemas de vários clientes se desconectando ao mesmo tempo.
+		boolean b = false;
+		synchronized (lockSessions) {
+			b = mSessions.remove(sc);
+		}
+		return b;
 	}
 
 	@Override
@@ -112,9 +119,11 @@ public class Server implements Runnable,ServerInterface
 	}
 
 	@Override
-	public synchronized int sendMessageToAll(String message) { // synchronized para não ter mais de uma thread mandando mensagem para todos os clientes
-		for(ClientSessionInterface sci : mSessions){
-			sci.sendMessage(message);
+	public int sendMessageToAll(String message) { // synchronized para não ter mais de uma thread mandando mensagem para todos os clientes
+		synchronized (lockSessions) {
+			for(ClientSessionInterface sci : mSessions){
+				sci.sendMessage(message);
+			}
 		}
 		return mSessions.size();
 	}
